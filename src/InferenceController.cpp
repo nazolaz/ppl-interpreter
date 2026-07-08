@@ -1,40 +1,15 @@
-#include <string>
-#include <random>
+#include "../include/InferenceController.h"
 
-using ExprPtr = std::string; 
+InferenceController::InferenceController(AnyRNG generator) : rng(std::move(generator)) {}
 
-class HOPPLParser {
-public:
-    ExprPtr parse_file(const std::string& filename) { 
-        return "parsed_ast_mock"; 
-    }
-};
+void InferenceController::run(const std::string& filename, int iterations) {
+    HOPPLParser parser;
+    Expr ast = parser.parse_file(filename);
+    this->run_ast(ast, iterations);
+}
 
-template <typename RNGType = std::mt19937>
-class InferenceController {
-protected:
-    RNGType rng;
+LikelihoodWeightingController::LikelihoodWeightingController(AnyRNG generator) 
+    : InferenceController(std::move(generator)) {}
 
-public:
-    InferenceController(RNGType generator = RNGType(std::random_device{}())) : rng(generator) {}
-    virtual ~InferenceController() = default;
-
-    virtual void run(const std::string& filename, int iterations) {
-        HOPPLParser parser;
-        ExprPtr ast = parser.parse_file(filename);
-
-        this->run_ast(ast, iterations);
-    }
-
-    virtual void run_ast(ExprPtr ast, int iterations) = 0;
-};
-
-template <typename RNGType = std::mt19937>
-class LikelihoodWeightingController : public InferenceController<RNGType> {
-public:
-    LikelihoodWeightingController(RNGType generator = RNGType(std::random_device{}())) 
-        : InferenceController<RNGType>(generator) {}
-    
-    void run_ast(ExprPtr ast, int iterations) override {
-    }
-};
+void LikelihoodWeightingController::run_ast(const Expr& ast, int iterations) {
+}
