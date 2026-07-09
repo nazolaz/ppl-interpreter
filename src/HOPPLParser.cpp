@@ -1,16 +1,7 @@
 #include "../include/HOPPLParser.h"
 #include <stdexcept>
-#include <iostream>
 #include <fstream>
 #include <sstream>
-
-bool Symbol::operator==(const Symbol& other) const { 
-    return value == other.value; 
-}
-
-bool Nil::operator==(const Nil&) const { 
-    return true; 
-}
 
 std::vector<Token> HOPPLParser::tokenize(const std::string& text) {
     std::vector<Token> tokens;
@@ -62,14 +53,11 @@ Expr HOPPLParser::parse_atom(const Token& token) {
     if (token.type == TokenType::String) {
         return Expr{token.value};
     }
-    if (token.value == "true") return Expr{true};
-    if (token.value == "false") return Expr{false};
-    if (token.value == "nil") return Expr{Nil{}};
 
     try {
         size_t pos;
         int i_val = std::stoi(token.value, &pos);
-        if (pos == token.value.length()) return Expr{i_val};
+        if (pos == token.value.length()) return Expr{static_cast<double>(i_val)};
     } catch (...) {}
 
     try {
@@ -78,7 +66,58 @@ Expr HOPPLParser::parse_atom(const Token& token) {
         if (pos == token.value.length()) return Expr{d_val};
     } catch (...) {}
 
-    return Expr{Symbol{token.value}};
+    return Expr{token.value};
+}
+
+Expr HOPPLParser::transform_list_to_node(const std::vector<Expr>& raw_list) {
+    if (raw_list.empty()) {
+        return Expr{raw_list};
+    }
+
+    if (std::holds_alternative<SymbolNode>(raw_list[0].value)) {
+        std::string head = std::get<SymbolNode>(raw_list[0].value).name;
+
+        if (head == "let") {
+            auto let_node = std::make_shared<LetNode>();
+            let_node->binds = std::get<std::vector<Expr>>(raw_list[1].value);
+            for (size_t i = 2; i < raw_list.size(); ++i) {
+                let_node->body.push_back(raw_list[i]);
+            }
+            return Expr{let_node};
+        }
+
+        if (head == "if") {
+            auto if_node = std::make_shared<IfNode>();
+            if_node->test = std::make_shared<Expr>(raw_list[1]);
+            if_node->then_branch = std::make_shared<Expr>(raw_list[2]);
+            if_node->else_branch = std::make_shared<Expr>(raw_list[3]);
+            return Expr{if_node};
+        }
+
+        if (head == "fn") {
+            auto fn_node = std::make_shared<FnNode>();
+            fn_node->params = std::get<std::vector<Expr>>(raw_list[1].value);
+            for (size_t i = 2; i < raw_list.size(); ++i) {
+                fn_node->body.push_back(raw_list[i]);
+            }
+            return Expr{fn_node};
+        }
+
+        if (head == "sample") {
+            auto sample_node = std::make_shared<SampleNode>();
+            sample_node->dist = std::make_shared<Expr>(raw_list[1]);
+            return Expr{sample_node};
+        }
+
+        if (head == "observe") {
+            auto observe_node = std::make_shared<ObserveNode>();
+            observe_node->dist = std::make_shared<Expr>(raw_list[1]);
+            observe_node->value = std::make_shared<Expr>(raw_list[2]);
+            return Expr{observe_node};
+        }
+    }
+
+    return Expr{raw_list};
 }
 
 std::pair<Expr, size_t> HOPPLParser::read_form(const std::vector<Token>& tokens, size_t pos) {
@@ -87,14 +126,14 @@ std::pair<Expr, size_t> HOPPLParser::read_form(const std::vector<Token>& tokens,
     }
     Token tok = tokens[pos];
     if (tok.type == TokenType::Normal && tok.value == "(") {
-        ExprList form;
+        std::vector<Expr> form;
         pos++;
         while (true) {
             if (pos >= tokens.size()) {
                 throw std::invalid_argument("missing closing parenthesis");
             }
             if (tokens[pos].type == TokenType::Normal && tokens[pos].value == ")") {
-                return {Expr{form}, pos + 1};
+                return {transform_list_to_node(form), pos + 1};
             }
             auto [sub_expr, next_pos] = read_form(tokens, pos);
             form.push_back(sub_expr);
@@ -107,9 +146,9 @@ std::pair<Expr, size_t> HOPPLParser::read_form(const std::vector<Token>& tokens,
     return {parse_atom(tok), pos + 1};
 }
 
-ExprList HOPPLParser::parse(const std::string& text) {
+std::vector<Expr> HOPPLParser::parse(const std::string& text) {
     std::vector<Token> tokens = tokenize(text);
-    ExprList forms;
+    std::vector<Expr> forms;
     size_t pos = 0;
     while (pos < tokens.size()) {
         auto [form, next_pos] = read_form(tokens, pos);
@@ -120,7 +159,7 @@ ExprList HOPPLParser::parse(const std::string& text) {
 }
 
 Expr HOPPLParser::parse_one(const std::string& text) {
-    ExprList forms = parse(text);
+    std::vector<Expr> forms = parse(text);
     if (forms.size() != 1) {
         throw std::invalid_argument("expected exactly one form");
     }
@@ -137,29 +176,4 @@ Expr HOPPLParser::parse_file(const std::string& filename) {
     buffer << file.rdbuf();
     
     return parse_one(buffer.str());
-}
-
-std::string HOPPLParser::to_string(const Expr& expr) {
-    if (std::holds_alternative<Nil>(expr.data)) return "nil";
-    if (std::holds_alternative<bool>(expr.data)) return std::get<bool>(expr.data) ? "true" : "false";
-    if (std::holds_alternative<int>(expr.data)) return std::to_string(std::get<int>(expr.data));
-    if (std::holds_alternative<double>(expr.data)) {
-        std::string s = std::to_string(std::get<double>(expr.data));
-        s.erase(s.find_last_not_of('0') + 1, std::string::npos);
-        if (s.back() == '.') s += '0';
-        return s;
-    }
-    if (std::holds_alternative<Symbol>(expr.data)) return std::get<Symbol>(expr.data).value;
-    if (std::holds_alternative<std::string>(expr.data)) return "\"" + std::get<std::string>(expr.data) + "\"";
-    if (std::holds_alternative<ExprList>(expr.data)) {
-        const auto& list = std::get<ExprList>(expr.data);
-        std::string res = "(";
-        for (size_t i = 0; i < list.size(); ++i) {
-            res += to_string(list[i]);
-            if (i < list.size() - 1) res += " ";
-        }
-        res += ")";
-        return res;
-    }
-    return "";
 }
