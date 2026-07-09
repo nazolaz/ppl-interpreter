@@ -3,6 +3,8 @@
 #include "../include/Primitives.h"
 #include "../include/Distribution.h"
 #include "../include/AnyRNG.h"
+#include "../include/Machine.h"
+#include "../include/Message.h"
 #include <cassert>
 #include <variant>
 #include <vector>
@@ -156,6 +158,64 @@ void test_distributions_2_bernoulli() {
     assert(std::abs(lp_bern - std::log(0.7)) < 1e-5);
 }
 
+void test_machine_1_literal_evaluation() {
+    Machine m;
+    m.C.push_back(EvInstr{Expr(42.0), Env{}, Address{}});
+    
+    Message msg = m.resume();
+
+    assert(std::holds_alternative<DoneMsg>(msg));
+    auto done_msg = std::get<DoneMsg>(msg);
+    
+    assert(std::holds_alternative<double>(done_msg.value));
+    assert(std::get<double>(done_msg.value) == 42.0);
+    
+    assert(m.V.size() == 1);
+    assert(std::get<double>(m.V.back()) == 42.0);
+}
+
+void test_machine_2_symbol_evaluation() {
+    Machine m;
+    
+    Env env;
+    env["mu"] = 3.14;
+
+    m.C.push_back(EvInstr{Expr("mu"), env, Address{}});
+    
+    Message msg = m.resume();
+
+    assert(std::holds_alternative<DoneMsg>(msg));
+    auto done_msg = std::get<DoneMsg>(msg);
+    
+    assert(std::holds_alternative<double>(done_msg.value));
+    assert(std::get<double>(done_msg.value) == 3.14);
+    assert(m.V.size() == 1);
+    assert(std::get<double>(m.V.back()) == 3.14);
+}
+
+void test_machine_3_symbol_not_found() {
+    Machine m;
+    
+    m.C.push_back(EvInstr{Expr("x"), Env{}, Address{}});
+    
+    bool threw_exception = false;
+    try {
+        m.resume();
+    } catch (const std::runtime_error& e) {
+        std::string err_msg = e.what();
+        assert(err_msg.find("NameError: x") != std::string::npos);
+        threw_exception = true;
+    }
+    
+    assert(threw_exception);
+}
+
+void run_machine_tests() {
+    test_machine_1_literal_evaluation();
+    test_machine_2_symbol_evaluation();
+    test_machine_3_symbol_not_found();
+}
+
 void run_parser_tests() {
     test_parser_1_basic_list_and_atoms();
     test_parser_2_if_node();
@@ -179,6 +239,7 @@ int main() {
     run_printVisitor_tests();
     test_primitives_1_basic_math();
     run_distributions_tests();
+    run_machine_tests();
     std::cout << "All tests passed successfully.\n";
     return 0;
 }
