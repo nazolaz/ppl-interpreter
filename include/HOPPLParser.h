@@ -1,29 +1,13 @@
-#ifndef HOPPL_PARSER_H
-#define HOPPL_PARSER_H
+#pragma once
 
 #include <string>
 #include <vector>
-#include <variant>
-
-struct Symbol {
-    std::string value;
-    bool operator==(const Symbol& other) const;
-};
-
-struct Nil {
-    bool operator==(const Nil&) const;
-};
-
-struct Expr;
-using ExprList = std::vector<Expr>;
-
-struct Expr {
-    std::variant<Nil, bool, int, double, std::string, Symbol, ExprList> data;
-};
+#include <utility>
+#include "Expr.h"
 
 enum class TokenType {
-    String,
-    Normal
+    Normal,
+    String
 };
 
 struct Token {
@@ -35,11 +19,9 @@ class HOPPLParser {
 public:
     static std::vector<Token> tokenize(const std::string& text);
     static Expr parse_atom(const Token& token);
+    static Expr transform_list_to_node(const std::vector<Expr>& raw_list);
     static std::pair<Expr, size_t> read_form(const std::vector<Token>& tokens, size_t pos);
-    static ExprList parse(const std::string& text);
+    static std::vector<Expr> parse(const std::string& text);
     static Expr parse_one(const std::string& text);
     static Expr parse_file(const std::string& filename);
-    static std::string to_string(const Expr& expr);
 };
-
-#endif
