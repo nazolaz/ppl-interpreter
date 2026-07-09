@@ -36,10 +36,6 @@ struct ObserveNode {
     std::shared_ptr<Expr> value;
 };
 
-struct CallNode {
-    std::vector<Expr> exprs;
-};
-
 struct Expr {
     std::variant<
         double,
@@ -50,7 +46,7 @@ struct Expr {
         std::shared_ptr<SampleNode>,
         std::shared_ptr<ObserveNode>,
         std::vector<Expr>
-    > value;
+    > value;    
 
     Expr() : value(std::vector<Expr>{}) {}
     Expr(double d) : value(d) {}

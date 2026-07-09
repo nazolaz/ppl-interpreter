@@ -1,9 +1,14 @@
 #include "../include/HOPPLParser.h"
 #include "../include/PrintVisitor.h"
+#include "../include/Primitives.h"
+#include "../include/Distribution.h"
+#include "../include/AnyRNG.h"
 #include <cassert>
 #include <variant>
 #include <vector>
 #include <sstream>
+#include <iostream>
+#include <cmath>
 
 void test_parser_1_basic_list_and_atoms() {
     Expr ast = HOPPLParser::parse_one("(+ 1 2.5)");
@@ -125,6 +130,32 @@ void test_print_3_deep_nested_expresion() {
     assert(buffer.str() == expected);
 }
 
+void test_primitives_1_basic_math() {
+    std::vector<Value> args1 = {2.0, 3.5};
+    Value res1 = PRIMITIVES["+"](args1);
+    assert(std::get<double>(res1) == 5.5);
+
+    std::vector<Value> args2 = {10.0, 2.0};
+    Value res2 = PRIMITIVES["/"](args2);
+    assert(std::get<double>(res2) == 5.0);
+
+    std::vector<Value> args3 = {5.0, 8.0};
+    Value res3 = PRIMITIVES["<"](args3);
+    assert(std::get<double>(res3) == 1.0);
+}
+
+void test_distributions_1_normal() {
+    Normal norm(0.0, 1.0);
+    double lp_norm = norm.log_prob(0.0);
+    assert(lp_norm > -1.0 && lp_norm < -0.9);
+}
+
+void test_distributions_2_bernoulli() {
+    Bernoulli bern(0.7);
+    double lp_bern = bern.log_prob(1.0);
+    assert(std::abs(lp_bern - std::log(0.7)) < 1e-5);
+}
+
 void run_parser_tests() {
     test_parser_1_basic_list_and_atoms();
     test_parser_2_if_node();
@@ -134,13 +165,20 @@ void run_parser_tests() {
 
 void run_printVisitor_tests(){
     test_print_1_basic_operation();
-    test_parser_2_if_node();
-    test_parser_3_let_and_fn_nodes();
+    test_print_2_regular_code();
+    test_print_3_deep_nested_expresion();
 }
 
+void run_distributions_tests() {
+    test_distributions_1_normal();
+    test_distributions_2_bernoulli();
+}
 
 int main() {
     run_parser_tests();
     run_printVisitor_tests();
+    test_primitives_1_basic_math();
+    run_distributions_tests();
+    std::cout << "All tests passed successfully.\n";
     return 0;
 }

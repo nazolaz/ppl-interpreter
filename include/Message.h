@@ -2,7 +2,7 @@
 
 #include <variant>
 #include <memory>
-#include "Machine.h"
+#include "Machine.h" 
 
 struct SampleMsg {
     Address addr;
@@ -18,5 +18,3 @@ struct ObserveMsg {
 struct DoneMsg {
     Value value;
 };
-
-using Message = std::variant<SampleMsg, ObserveMsg, DoneMsg>;
