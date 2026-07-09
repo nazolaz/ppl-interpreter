@@ -15,7 +15,7 @@ std::vector<Token> HOPPLParser::tokenize(const std::string& text) {
         } else if (c == ';') {
             while (i < n && text[i] != '\n') {
                 i++;
-            }
+            } 
         } else if (c == '(' || c == ')' || c == '[' || c == ']') {
             tokens.push_back({TokenType::Normal, (c == '(' || c == '[') ? "(" : ")"});
             i++;
