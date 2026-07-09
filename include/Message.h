@@ -4,8 +4,6 @@
 #include <memory>
 #include "Machine.h"
 
-using Message = std::variant<SampleMsg, ObserveMsg, DoneMsg>;
-
 struct SampleMsg {
     Address addr;
     std::shared_ptr<Distribution> dist;
@@ -21,5 +19,4 @@ struct DoneMsg {
     Value value;
 };
 
-
-Message resume(Machine& m);
+using Message = std::variant<SampleMsg, ObserveMsg, DoneMsg>;
