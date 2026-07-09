@@ -4,8 +4,7 @@
 #include "Value.h"
 
 struct Machine;
-struct Address; 
-using Message = std::variant<SampleMsg, ObserveMsg, DoneMsg>;
+
 
 struct SampleMsg {
     std::vector<std::string> addr;
@@ -25,3 +24,4 @@ struct DoneMsg {
     Machine* m;
 };
 
+using Message = std::variant<SampleMsg, ObserveMsg, DoneMsg>;
