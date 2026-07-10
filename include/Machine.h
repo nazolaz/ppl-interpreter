@@ -25,16 +25,14 @@ private:
     void evalLetNode(const std::shared_ptr<LetNode>& let_node, const Env& env, const Address& addr);
     void evalLiteral(double d);
     void evalSymbol(const SymbolNode& sym, const Env& current_env);
+    void evalFnNode(const std::shared_ptr<FnNode>& fn_node, const Env& env);
     void evalList(const std::vector<Expr>& list, const Env& env, const Address& addr);
 
     std::vector<Value> popArguments(int n);
     Value popValue();
     Address extendAddress(Address addr, const std::string& suffix);
-    void applyFunction(const Value& func, const std::vector<Value>& args);
+    void applyFunction(const Value& func, const std::vector<Value>& args, const Address& addr);
     void pushBody(const std::vector<Expr>& body, const Env& env, const Address& addr);
-    bool hasBinding(const std::vector<Expr>& binds, int pair_index);
-    std::string getBindingName(const std::vector<Expr>& binds, int pair_index);
-    Expr getBindingValue(const std::vector<Expr>& binds, int pair_index);
-    bool isPrimitive(const Value& func);
-    std::string getPrimitiveName(const Value& func);
+    void applyPrimitive(const Value& func, const std::vector<Value>& args);
+    void applyClosure(const Value& func, const std::vector<Value>& args, const Address& addr);
 };

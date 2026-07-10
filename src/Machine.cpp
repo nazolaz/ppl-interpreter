@@ -38,6 +38,7 @@ std::optional<Message> Machine::stepEvaluate(EvInstr& instr) {
         [this, &instr](SymbolNode& sym) { evalSymbol(sym, instr.env); },
         [this, &instr](std::vector<Expr>& list) { evalList(list, instr.env, instr.addr); },
         [this, &instr](std::shared_ptr<LetNode>& let_node) { evalLetNode(let_node, instr.env, instr.addr); },
+        [this, &instr](std::shared_ptr<FnNode>& fn_node) { evalFnNode(fn_node, instr.env); },
         [&instr](auto& other) {
             throw std::runtime_error("Expression type not implemented. Variant index: " + std::to_string(instr.e.value.index()));
         }
@@ -50,23 +51,23 @@ std::optional<Message> Machine::stepCallContinuation(CallkInstr& instr) {
     std::vector<Value> args = popArguments(instr.n_args);
     Value func = popValue();
 
-    applyFunction(func, args);
+    applyFunction(func, args, instr.addr);
 
     return std::nullopt;
 }
 
 std::optional<Message> Machine::stepLetContinuation(LetkInstr& instr) {
     Value val = popValue();
-    std::string var_name = getBindingName(instr.binds, instr.i);
+    std::string var_name = instr.getBindingName(instr.i);
 
     Env new_env = instr.env;
     new_env[var_name] = val;
 
     int next_i = instr.i + 1;
 
-    if (hasBinding(instr.binds, next_i)) {
+    if (instr.hasBinding(next_i)) {
         C.push_back(LetkInstr{instr.binds, next_i, instr.body, new_env, instr.addr});
-        C.push_back(EvInstr{getBindingValue(instr.binds, next_i), new_env, extendAddress(instr.addr, "let_" + std::to_string(next_i * 2))});
+        C.push_back(EvInstr{instr.getBindingValue(next_i), new_env, extendAddress(instr.addr, "let_" + std::to_string(next_i * 2))});
     } else {
         pushBody(instr.body, new_env, instr.addr);
     }
@@ -106,12 +107,23 @@ void Machine::evalList(const std::vector<Expr>& list, const Env& env, const Addr
 
 
 void Machine::evalLetNode(const std::shared_ptr<LetNode>& let_node, const Env& env, const Address& addr) {
-    if (hasBinding(let_node->binds, 0)) {
+    if (let_node->hasBinding(0)) {
         C.push_back(LetkInstr{let_node->binds, 0, let_node->body, env, addr});
-        C.push_back(EvInstr{getBindingValue(let_node->binds, 0), env, extendAddress(addr, "let_0")});
+        C.push_back(EvInstr{let_node->getBindingValue(0), env, extendAddress(addr, "let_0")});
     } else {
         pushBody(let_node->body, env, addr);
     }
+}
+
+void Machine::evalFnNode(const std::shared_ptr<FnNode>& fn_node, const Env& env) {
+    auto closure = std::make_shared<Closure>();
+    
+    closure->params = fn_node->params;
+    closure->body = fn_node->body;
+    
+    closure->env = env;
+    
+    V.push_back(closure);
 }
 
 // AUX - DECLARATIVE METHODS
@@ -135,30 +147,16 @@ Address Machine::extendAddress(Address addr, const std::string& suffix) {
     return addr; 
 }
 
-void Machine::applyFunction(const Value& func, const std::vector<Value>& args) {
+void Machine::applyFunction(const Value& func, const std::vector<Value>& args, const Address& addr) {
     if (isPrimitive(func)) {
-        std::string prim_name = getPrimitiveName(func);
-        if (PRIMITIVES.count(prim_name)) {
-            V.push_back(PRIMITIVES.at(prim_name)(args));
-        } else {
-            throw std::runtime_error("Not a function: " + prim_name);
-        }
+        applyPrimitive(func, args);
+    } else if (isClosure(func)) {
+        applyClosure(func, args, addr);
     } else {
-        throw std::runtime_error("Function application for non-primitives not implemented yet.");
+        throw std::runtime_error("Function application for this type is not implemented.");
     }
 }
 
-bool Machine::hasBinding(const std::vector<Expr>& binds, int pair_index) {
-    return (2 * pair_index) < binds.size();
-}
-
-std::string Machine::getBindingName(const std::vector<Expr>& binds, int pair_index) {
-    return std::get<SymbolNode>(binds[2 * pair_index].value).name;
-}
-
-Expr Machine::getBindingValue(const std::vector<Expr>& binds, int pair_index) {
-    return binds[(2 * pair_index) + 1];
-}
 
 void Machine::pushBody(const std::vector<Expr>& body, const Env& env, const Address& addr) {
     C.push_back(EvInstr{body.back(), env, extendAddress(addr, "body_" + std::to_string(body.size() - 1))});
@@ -169,10 +167,28 @@ void Machine::pushBody(const std::vector<Expr>& body, const Env& env, const Addr
     }
 }
 
-bool Machine::isPrimitive(const Value& func) {
-    return std::holds_alternative<std::string>(func);
+
+void Machine::applyPrimitive(const Value& func, const std::vector<Value>& args) {
+    std::string prim_name = getPrimitiveName(func);
+    if (PRIMITIVES.count(prim_name)) {
+        V.push_back(PRIMITIVES.at(prim_name)(args));
+    } else {
+        throw std::runtime_error("Not a function: " + prim_name);
+    }
 }
 
-std::string Machine::getPrimitiveName(const Value& func) {
-    return std::get<std::string>(func);
+void Machine::applyClosure(const Value& func, const std::vector<Value>& args, const Address& addr) {
+    auto closure = getClosure(func);
+    
+    if (args.size() != closure->params.size()) {
+        throw std::runtime_error("Arity mismatch: expected " + std::to_string(closure->params.size()) + " arguments.");
+    }
+
+    Env execution_env = closure->env;
+
+    for (size_t i = 0; i < args.size(); ++i) {
+        execution_env[closure->getParamName(i)] = args[i];
+    }
+
+    pushBody(closure->body, execution_env, extendAddress(addr, "apply"));
 }

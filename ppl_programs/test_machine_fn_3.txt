@@ -1,0 +1,1 @@
+(let [apply-twice (fn [f x] (f (f x))) add-five (fn [y] (+ y 5))] (apply-twice add-five 10))

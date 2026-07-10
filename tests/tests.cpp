@@ -277,6 +277,23 @@ void test_machine_let_3_body() {
     assert(std::get<double>(res) == 12.0);
 }
 
+// HIGHER ORDER AND FUNCTION TESTS
+
+void test_machine_fn_1_basic() {
+    Value res = run_file_through_machine("ppl_programs/test_machine_fn_1.txt");
+    assert(std::get<double>(res) == 15.0);
+}
+
+void test_machine_fn_2_closure() {
+    Value res = run_file_through_machine("ppl_programs/test_machine_fn_2.txt");
+    assert(std::get<double>(res) == 15.0);
+}
+
+void test_machine_fn_3_higher_order() {
+    Value res = run_file_through_machine("ppl_programs/test_machine_fn_3.txt");
+    assert(std::get<double>(res) == 20.0);
+}
+
 
 // TEST RUNNERS
 
@@ -319,6 +336,12 @@ void run_machine_let_tests() {
     test_machine_let_3_body();
 }
 
+void run_machine_fn_tests() {
+    test_machine_fn_1_basic();
+    test_machine_fn_2_closure();
+    test_machine_fn_3_higher_order();
+}
+
 int main() {
     run_parser_tests();
     run_printVisitor_tests();
@@ -327,6 +350,7 @@ int main() {
     run_machine_tests();
     run_machine_function_eval_tests();
     run_machine_let_tests();
+    run_machine_fn_tests();
     std::cout << "All tests passed successfully.\n";
     return 0;
 }

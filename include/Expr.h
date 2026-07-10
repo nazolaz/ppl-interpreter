@@ -14,6 +14,10 @@ struct SymbolNode {
 struct LetNode {
     std::vector<Expr> binds;
     std::vector<Expr> body;
+
+    bool hasBinding(int pair_index) const;
+    std::string getBindingName(int pair_index) const;
+    Expr getBindingValue(int pair_index) const;
 };
 
 struct IfNode {
@@ -59,3 +63,15 @@ struct Expr {
     Expr(std::shared_ptr<SampleNode> n) : value(n) {}
     Expr(std::shared_ptr<ObserveNode> n) : value(n) {}
 };
+
+inline bool LetNode::hasBinding(int pair_index) const { 
+    return (2 * pair_index) < binds.size(); 
+}
+
+inline std::string LetNode::getBindingName(int pair_index) const { 
+    return std::get<SymbolNode>(binds[2 * pair_index].value).name; 
+}
+
+inline Expr LetNode::getBindingValue(int pair_index) const { 
+    return binds[(2 * pair_index) + 1]; 
+}
