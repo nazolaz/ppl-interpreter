@@ -22,6 +22,8 @@ private:
     std::optional<Message> stepCallContinuation(CallkInstr& instr);
     std::optional<Message> stepLetContinuation(LetkInstr& instr);
     std::optional<Message> stepIfContinuation(IfkInstr& instr);
+    std::optional<Message> stepSampleContinuation(SamplekInstr& instr);
+    std::optional<Message> stepObserveContinuation(ObservekInstr& instr);
     
     void evalIfNode(const std::shared_ptr<IfNode>& if_node, const Env& env, const Address& addr);
     void evalLetNode(const std::shared_ptr<LetNode>& let_node, const Env& env, const Address& addr);

@@ -16,6 +16,8 @@ Message Machine::resume() {
             [this](CallkInstr& i) { return stepCallContinuation(i); },
             [this](LetkInstr& i) { return stepLetContinuation(i); }, 
             [this](IfkInstr& i) { return stepIfContinuation(i); },
+            [this](SamplekInstr& i) { return stepSampleContinuation(i); },
+            [this](ObservekInstr& i) { return stepObserveContinuation(i); },
             [this](DiscardInstr& i) -> std::optional<Message> { popValue(); return std::nullopt; },
             [](auto& i) -> std::optional<Message> { 
                 throw std::runtime_error("Instruction handler not implemented."); 
@@ -87,6 +89,23 @@ std::optional<Message> Machine::stepLetContinuation(LetkInstr& instr) {
     }
 
     return std::nullopt;
+}
+
+std::optional<Message> Machine::stepSampleContinuation(SamplekInstr& instr) {
+    Value dist_val = popValue();
+    auto dist = std::get<std::shared_ptr<Distribution>>(dist_val);
+    
+    return SampleMsg{instr.addr, dist, this};
+}
+
+std::optional<Message> Machine::stepObserveContinuation(ObservekInstr& instr) {
+    Value y_val = popValue();
+    Value dist_val = popValue();
+    
+    double y = std::get<double>(y_val);
+    auto dist = std::get<std::shared_ptr<Distribution>>(dist_val);
+    
+    return ObserveMsg{instr.addr, dist, y, this};
 }
 
 // EVAL METHODS
@@ -168,7 +187,21 @@ Address Machine::extendAddress(Address addr, const std::string& suffix) {
 
 void Machine::applyFunction(const Value& func, const std::vector<Value>& args, const Address& addr) {
     if (isPrimitive(func)) {
-        applyPrimitive(func, args);
+        std::string prim_name = getPrimitiveName(func);
+        
+        if (prim_name == "sample") {
+            V.push_back(args[0]); 
+            C.push_back(SamplekInstr{addr});
+            return;
+        } 
+        else if (prim_name == "observe") {
+            V.push_back(args[0]); 
+            V.push_back(args[1]); 
+            C.push_back(ObservekInstr{addr});
+            return;
+        }
+
+        applyPrimitive(func, args); 
     } else if (isClosure(func)) {
         applyClosure(func, args, addr);
     } else {
