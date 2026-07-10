@@ -5,6 +5,38 @@
 #include <random>
 #include <omp.h>
 
+void LikelihoodWeighting::run(const std::string& filename, int iterations, uint32_t seed) {
+    Expr ast = parse_program(filename);
+
+    std::vector<Value> results(iterations);
+    std::vector<double> log_weights(iterations);
+
+    execute_parallel_particles(ast, iterations, seed, results, log_weights);
+
+    std::vector<double> normalized_weights = softmax(log_weights);
+}
+
+Expr LikelihoodWeighting::parse_program(const std::string& filename) {
+    HOPPLParser parser;
+    return parser.parse_file(filename);
+}
+
+void LikelihoodWeighting::execute_parallel_particles(const Expr& ast, int iterations, uint32_t seed, std::vector<Value>& results, std::vector<double>& log_weights) {
+    #pragma omp parallel for
+    for (int i = 0; i < iterations; ++i) {
+        std::mt19937 base_rng(seed + i);
+        AnyRNG rng(base_rng);
+
+        Machine m;
+        m.load_ast(ast); 
+
+        auto [val, weight] = run_particle(m, rng);
+        
+        results[i] = val;
+        log_weights[i] = weight;
+    }
+}
+
 std::pair<Value, double> LikelihoodWeighting::run_particle(Machine& m, AnyRNG& rng) {
     while (true) {
         Message msg = m.resume();
@@ -46,27 +78,4 @@ std::vector<double> LikelihoodWeighting::softmax(const std::vector<double>& log_
     }
     
     return probs;
-}
-
-void LikelihoodWeighting::run(const std::string& filename, int iterations, uint32_t seed) {
-    HOPPLParser parser;
-    Expr ast = parser.parse_file(filename);
-
-    std::vector<Value> results(iterations);
-    std::vector<double> log_weights(iterations);
-
-    #pragma omp parallel for
-    for (int i = 0; i < iterations; ++i) {
-        std::mt19937 base_rng(seed + i);
-        AnyRNG rng(base_rng);
-
-        Machine m;
-        m.load_ast(ast); 
-
-        auto [val, weight] = run_particle(m, rng);
-        results.push_back(val);
-        log_weights.push_back(weight);
-    }
-
-    std::vector<double> normalized_weights = softmax(log_weights);
 }
