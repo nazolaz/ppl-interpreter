@@ -4,11 +4,10 @@
 #include <random>
 #include <stdexcept>
 
-std::vector<double> MetropolisHastings::run(const std::string& filename, int steps, int warmup, uint32_t seed) {
+std::vector<double> MetropolisHastings::run(const std::string& filename, int steps, int warmup, std::optional<uint32_t> seed) {
     Expr ast = parse_program(filename);
     
-    std::mt19937 base_engine(seed);
-    AnyRNG rng(base_engine);
+    AnyRNG rng = seed.has_value() ? AnyRNG(std::mt19937(seed.value())) : AnyRNG();
     
     MHState current_state = execute_trace(ast, rng, std::nullopt, {});
     std::vector<double> chain;

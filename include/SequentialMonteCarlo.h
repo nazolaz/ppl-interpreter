@@ -2,16 +2,17 @@
 
 #include <string>
 #include <vector>
+#include <optional>
 #include "Machine.h"
 #include "AnyRNG.h"
 #include "Message.h"
 
 class SequentialMonteCarlo {
 public:
-    std::vector<double> run(const std::string& filename, int num_particles, uint32_t base_seed);
+    std::vector<double> run(const std::string& filename, int num_particles, std::optional<uint32_t> base_seed = std::nullopt);
 
 private:
-    void initialize_particles(const std::string& filename, int num_particles, uint32_t base_seed, std::vector<Machine>& particles, std::vector<AnyRNG>& rngs);
+    void initialize_particles(const std::string& filename, int num_particles, std::optional<uint32_t> base_seed, std::vector<Machine>& particles, std::vector<AnyRNG>& rngs);
     std::vector<Message> advance_particles(std::vector<Machine>& particles, std::vector<AnyRNG>& rngs);
     Message advance(Machine& m, AnyRNG& rng);
     bool check_all_done(const std::vector<Message>& messages);

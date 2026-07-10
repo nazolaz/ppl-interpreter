@@ -6,7 +6,7 @@
 #include <random>
 #include <omp.h>
 
-std::vector<double> SequentialMonteCarlo::run(const std::string& filename, int num_particles, uint32_t base_seed) {
+std::vector<double> SequentialMonteCarlo::run(const std::string& filename, int num_particles, std::optional<uint32_t> base_seed) {
     std::vector<Machine> particles;
     std::vector<AnyRNG> rngs;
     
@@ -20,14 +20,14 @@ std::vector<double> SequentialMonteCarlo::run(const std::string& filename, int n
         }
 
         if (!check_all_observe(messages)) {
-            throw std::runtime_error("shared observe sequence needed.");
+            throw std::runtime_error("SMC needs a shared observe sequence.");
         }
 
         execute_resampling(particles, messages, rngs[0]);
     }
 }
 
-void SequentialMonteCarlo::initialize_particles(const std::string& filename, int num_particles, uint32_t base_seed, std::vector<Machine>& particles, std::vector<AnyRNG>& rngs) {
+void SequentialMonteCarlo::initialize_particles(const std::string& filename, int num_particles, std::optional<uint32_t> base_seed, std::vector<Machine>& particles, std::vector<AnyRNG>& rngs) {
     HOPPLParser parser;
     Expr ast = parser.parse_file(filename);
 
@@ -35,8 +35,11 @@ void SequentialMonteCarlo::initialize_particles(const std::string& filename, int
     rngs.reserve(num_particles);
 
     for (int i = 0; i < num_particles; ++i) {
-        std::mt19937 base_engine(base_seed + i);
-        rngs.emplace_back(base_engine);
+        if (base_seed.has_value()) {
+            rngs.emplace_back(std::mt19937(base_seed.value() + i));
+        } else {
+            rngs.emplace_back();
+        }
         particles[i].load_ast(ast);
     }
 }

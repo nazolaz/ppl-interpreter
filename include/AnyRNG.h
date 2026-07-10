@@ -11,6 +11,17 @@ private:
     std::function<uint32_t()> generator;
 
 public:
+    using result_type = uint32_t;
+
+    AnyRNG() {
+        std::random_device rd;
+        std::mt19937 engine(rd());
+        std::independent_bits_engine<std::mt19937, 32, uint32_t> adapter(std::move(engine));
+        generator = [adapter]() mutable { 
+            return adapter(); 
+        };
+    }
+
     template<typename T>
     AnyRNG(T engine) {
         std::independent_bits_engine<T, 32, uint32_t> adapter(std::move(engine));

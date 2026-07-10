@@ -5,7 +5,7 @@
 #include <random>
 #include <omp.h>
 
-void LikelihoodWeighting::run(const std::string& filename, int iterations, uint32_t seed) {
+std::pair<std::vector<double>, std::vector<double>> LikelihoodWeighting::run(const std::string& filename, int iterations, std::optional<uint32_t> seed) {
     Expr ast = parse_program(filename);
 
     std::vector<Value> results(iterations);
@@ -14,6 +14,13 @@ void LikelihoodWeighting::run(const std::string& filename, int iterations, uint3
     execute_parallel_particles(ast, iterations, seed, results, log_weights);
 
     std::vector<double> normalized_weights = softmax(log_weights);
+    std::vector<double> numeric_results(iterations);
+
+    for (int i = 0; i < iterations; ++i) {
+        numeric_results[i] = std::get<double>(results[i]);
+    }
+
+    return {numeric_results, normalized_weights};
 }
 
 Expr LikelihoodWeighting::parse_program(const std::string& filename) {
@@ -21,19 +28,25 @@ Expr LikelihoodWeighting::parse_program(const std::string& filename) {
     return parser.parse_file(filename);
 }
 
-void LikelihoodWeighting::execute_parallel_particles(const Expr& ast, int iterations, uint32_t seed, std::vector<Value>& results, std::vector<double>& log_weights) {
+void LikelihoodWeighting::execute_parallel_particles(const Expr& ast, int iterations, std::optional<uint32_t> seed, std::vector<Value>& results, std::vector<double>& log_weights) {
     #pragma omp parallel for
     for (int i = 0; i < iterations; ++i) {
-        std::mt19937 base_rng(seed + i);
-        AnyRNG rng(base_rng);
-
         Machine m;
         m.load_ast(ast); 
-
-        auto [val, weight] = run_particle(m, rng);
         
-        results[i] = val;
-        log_weights[i] = weight;
+        std::pair<Value, double> particle_result;
+
+        if (seed.has_value()) {
+            std::mt19937 base_rng(seed.value() + i);
+            AnyRNG rng(base_rng);
+            particle_result = run_particle(m, rng);
+        } else {
+            AnyRNG rng;
+            particle_result = run_particle(m, rng);
+        }
+        
+        results[i] = particle_result.first;
+        log_weights[i] = particle_result.second;
     }
 }
 

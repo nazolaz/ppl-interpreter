@@ -28,7 +28,7 @@ struct MHState {
 
 class MetropolisHastings {
 public:
-    std::vector<double> run(const std::string& filename, int steps, int warmup, uint32_t seed);
+    std::vector<double> run(const std::string& filename, int steps, int warmup, std::optional<uint32_t> seed = std::nullopt);
 
 private:
     Expr parse_program(const std::string& filename);

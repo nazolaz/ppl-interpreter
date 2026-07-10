@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <utility>
+#include <optional>
 #include "Machine.h"
 #include "AnyRNG.h"
 #include "Expr.h"
@@ -10,11 +11,11 @@
 
 class LikelihoodWeighting {
 public:
-    void run(const std::string& filename, int iterations, uint32_t seed);
+    std::pair<std::vector<double>, std::vector<double>> run(const std::string& filename, int iterations, std::optional<uint32_t> seed = std::nullopt);
 
 private:
     Expr parse_program(const std::string& filename);
-    void execute_parallel_particles(const Expr& ast, int iterations, uint32_t seed, std::vector<Value>& results, std::vector<double>& log_weights);
+    void execute_parallel_particles(const Expr& ast, int iterations, std::optional<uint32_t> seed, std::vector<Value>& results, std::vector<double>& log_weights);
     std::pair<Value, double> run_particle(Machine& m, AnyRNG& rng);
     std::vector<double> softmax(const std::vector<double>& log_weights);
 };
