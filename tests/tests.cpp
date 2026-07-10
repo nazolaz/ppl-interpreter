@@ -260,6 +260,24 @@ void test_machine_integration_5_complex_calc() {
     assert(std::get<double>(res) == 125.0);
 }
 
+// LET IMPLEMENTATION TESTS
+
+void test_machine_let_1_simple() {
+    Value res = run_file_through_machine("ppl_programs/test_machine_let_1.txt");
+    assert(std::get<double>(res) == 15.0);
+}
+
+void test_machine_let_2_dependent() {
+    Value res = run_file_through_machine("ppl_programs/test_machine_let_2.txt");
+    assert(std::get<double>(res) == 25.0);
+}
+
+void test_machine_let_3_body() {
+    Value res = run_file_through_machine("ppl_programs/test_machine_let_3.txt");
+    assert(std::get<double>(res) == 12.0);
+}
+
+
 // TEST RUNNERS
 
 void run_machine_tests() {
@@ -294,6 +312,13 @@ void run_machine_function_eval_tests() {
     test_machine_integration_5_complex_calc();
 }
 
+
+void run_machine_let_tests() {
+    test_machine_let_1_simple();
+    test_machine_let_2_dependent();
+    test_machine_let_3_body();
+}
+
 int main() {
     run_parser_tests();
     run_printVisitor_tests();
@@ -301,6 +326,7 @@ int main() {
     run_distributions_tests();
     run_machine_tests();
     run_machine_function_eval_tests();
+    run_machine_let_tests();
     std::cout << "All tests passed successfully.\n";
     return 0;
 }
