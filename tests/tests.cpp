@@ -12,6 +12,8 @@
 #include <iostream>
 #include <cmath>
 
+// PARSER TESTS 
+
 void test_parser_1_basic_list_and_atoms() {
     Expr ast = HOPPLParser::parse_one("(+ 1 2.5)");
     
@@ -90,6 +92,8 @@ void test_parser_4_sample_and_observe_nodes() {
     assert(std::get<double>(obs_node->value->value) == 2.5);
 }
 
+// PrintVisitor TESTS 
+
 void test_print_1_basic_operation() {
     Expr ast = HOPPLParser::parse_one("(+ 10.5 20)");
 
@@ -132,6 +136,8 @@ void test_print_3_deep_nested_expresion() {
     assert(buffer.str() == expected);
 }
 
+// PRIMITIVES AND DISTRIBUTIONS TEST
+
 void test_primitives_1_basic_math() {
     std::vector<Value> args1 = {2.0, 3.5};
     Value res1 = PRIMITIVES["+"](args1);
@@ -157,6 +163,8 @@ void test_distributions_2_bernoulli() {
     double lp_bern = bern.log_prob(1.0);
     assert(std::abs(lp_bern - std::log(0.7)) < 1e-5);
 }
+
+// MACHINE SYMBOL AND LITERAL EVALUATION TESTS
 
 void test_machine_1_literal_evaluation() {
     Machine m;
@@ -210,6 +218,50 @@ void test_machine_3_symbol_not_found() {
     assert(threw_exception);
 }
 
+// MACHINE FUNCTION EVALUATION TESTS
+
+Value run_file_through_machine(const std::string& filepath, Env env = Env{}) {
+    Expr ast = HOPPLParser::parse_file(filepath);
+
+    Machine m;
+    m.C.push_back(EvInstr{ast, env, Address{}});
+    Message msg = m.resume();
+
+    assert(std::holds_alternative<DoneMsg>(msg));
+    return std::get<DoneMsg>(msg).value;
+}
+
+void test_machine_integration_1_basic_math() {
+    Value res = run_file_through_machine("ppl_programs/test_machine_eval_1.txt");
+    assert(std::get<double>(res) == 20.0);
+}
+
+void test_machine_integration_2_nested_math() {
+    Value res = run_file_through_machine("ppl_programs/test_machine_eval_2.txt");
+    assert(std::get<double>(res) == 15.0);
+}
+
+void test_machine_integration_3_comparison() {
+    Value res = run_file_through_machine("ppl_programs/test_machine_eval_3.txt");
+    assert(std::get<double>(res) == 1.0);
+}
+
+void test_machine_integration_4_env_vars() {
+    Env env;
+    env["x"] = 10.0;
+    env["y"] = 3.0;
+    
+    Value res = run_file_through_machine("ppl_programs/test_machine_eval_4.txt", env);
+    assert(std::get<double>(res) == 16.0);
+}
+
+void test_machine_integration_5_complex_calc() {
+    Value res = run_file_through_machine("ppl_programs/test_machine_eval_5.txt");
+    assert(std::get<double>(res) == 125.0);
+}
+
+// TEST RUNNERS
+
 void run_machine_tests() {
     test_machine_1_literal_evaluation();
     test_machine_2_symbol_evaluation();
@@ -234,12 +286,21 @@ void run_distributions_tests() {
     test_distributions_2_bernoulli();
 }
 
+void run_machine_function_eval_tests() {
+    test_machine_integration_1_basic_math();
+    test_machine_integration_2_nested_math();
+    test_machine_integration_3_comparison();
+    test_machine_integration_4_env_vars();
+    test_machine_integration_5_complex_calc();
+}
+
 int main() {
     run_parser_tests();
     run_printVisitor_tests();
     test_primitives_1_basic_math();
     run_distributions_tests();
     run_machine_tests();
+    run_machine_function_eval_tests();
     std::cout << "All tests passed successfully.\n";
     return 0;
 }

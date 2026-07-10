@@ -19,7 +19,14 @@ public:
 
 private:
     std::optional<Message> stepEvaluate(EvInstr& instr);
-    
+    std::optional<Message> stepCallContinuation(CallkInstr& instr);
+
     void evalLiteral(double d);
     void evalSymbol(const SymbolNode& sym, const Env& current_env);
+    void evalList(const std::vector<Expr>& list, const Env& env, const Address& addr);
+
+    std::vector<Value> popArguments(int n);
+    Value popValue();
+    Address extendAddress(Address addr, const std::string& suffix);
+    void applyFunction(const Value& func, const std::vector<Value>& args);
 };
