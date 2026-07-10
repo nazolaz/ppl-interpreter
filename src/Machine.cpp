@@ -33,6 +33,10 @@ Message Machine::resume() {
     return DoneMsg{final_result};
 }
 
+Machine Machine::fork() const {
+    return *this;
+}
+
 void Machine::load_ast(const Expr& ast, const Env& env) {
     C.push_back(EvInstr{ast, env, Address{}});
 }
