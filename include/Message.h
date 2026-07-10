@@ -1,27 +1,24 @@
 #pragma once
 #include <variant>
 #include <memory>
+#include <vector>
+#include <string>
 #include "Value.h"
-
-struct Machine;
-
+#include "Distribution.h"
 
 struct SampleMsg {
     std::vector<std::string> addr;
     std::shared_ptr<Distribution> dist;
-    Machine* m;
 };
 
 struct ObserveMsg {
     std::vector<std::string> addr;
     std::shared_ptr<Distribution> dist;
     double value;
-    Machine* m;
 };
 
 struct DoneMsg {
     Value value;
-    Machine* m;
 };
 
 using Message = std::variant<SampleMsg, ObserveMsg, DoneMsg>;

@@ -7,17 +7,21 @@
 
 class Machine {
 public:
+    Machine() = default;
+
+    Message resume();
+    Machine fork() const;
+    void load_ast(const Expr& ast, const Env& env = Env{});
+    void send(const Value& val);
+    void add_log_weight(double weight);
+    double get_log_weight() const;
+
+private:
     std::vector<Instruction> C;
     std::vector<Value> V;
     Env env;
     double log_w = 0.0;
 
-    Machine() = default;
-
-    Message resume();
-    Machine fork() const;
-
-private:
     std::optional<Message> stepEvaluate(EvInstr& instr);
     std::optional<Message> stepCallContinuation(CallkInstr& instr);
     std::optional<Message> stepLetContinuation(LetkInstr& instr);

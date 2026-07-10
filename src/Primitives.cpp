@@ -1,6 +1,9 @@
 #include "Primitives.h"
+#include "Distribution.h" 
 #include <cmath>
 #include <stdexcept>
+#include <memory>
+#include <vector>
 
 double get_num(const Value& v) {
     if (std::holds_alternative<double>(v)) {
@@ -53,6 +56,52 @@ std::unordered_map<std::string, PrimitiveFunc> PRIMITIVES = {
     }},
     {"=", [](const std::vector<Value>& args) -> Value {
         return (get_num(args[0]) == get_num(args[1])) ? 1.0 : 0.0;
+    }},
+
+    // --- CONSTRUCTORES DE DISTRIBUCIONES ---
+    {"normal", [](const std::vector<Value>& args) -> Value {
+        return std::make_shared<Normal>(get_num(args[0]), get_num(args[1]));
+    }},
+    {"bernoulli", [](const std::vector<Value>& args) -> Value {
+        return std::make_shared<Bernoulli>(get_num(args[0]));
+    }},
+    {"flip", [](const std::vector<Value>& args) -> Value {
+        return std::make_shared<Bernoulli>(get_num(args[0]));
+    }},
+    {"exponential", [](const std::vector<Value>& args) -> Value {
+        return std::make_shared<Exponential>(get_num(args[0]));
+    }},
+    {"uniform", [](const std::vector<Value>& args) -> Value {
+        return std::make_shared<Uniform>(get_num(args[0]), get_num(args[1]));
+    }},
+    {"uniform-continuous", [](const std::vector<Value>& args) -> Value {
+        return std::make_shared<Uniform>(get_num(args[0]), get_num(args[1]));
+    }},
+    {"poisson", [](const std::vector<Value>& args) -> Value {
+        return std::make_shared<Poisson>(get_num(args[0]));
+    }},
+    {"beta", [](const std::vector<Value>& args) -> Value {
+        return std::make_shared<BetaDist>(get_num(args[0]), get_num(args[1]));
+    }},
+    {"gamma", [](const std::vector<Value>& args) -> Value {
+        return std::make_shared<GammaDist>(get_num(args[0]), get_num(args[1]));
+    }},
+    
+    {"discrete", [](const std::vector<Value>& args) -> Value {
+        std::vector<double> probs;
+        probs.reserve(args.size());
+        for (const auto& arg : args) {
+            probs.push_back(get_num(arg));
+        }
+        return std::make_shared<Discrete>(probs);
+    }},
+    {"categorical", [](const std::vector<Value>& args) -> Value {
+        std::vector<double> probs;
+        probs.reserve(args.size());
+        for (const auto& arg : args) {
+            probs.push_back(get_num(arg));
+        }
+        return std::make_shared<Discrete>(probs);
     }}
 };
 

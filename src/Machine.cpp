@@ -30,7 +30,23 @@ Message Machine::resume() {
     }
 
     Value final_result = V.empty() ? Value(0.0) : V.back();
-    return DoneMsg{final_result, this};
+    return DoneMsg{final_result};
+}
+
+void Machine::load_ast(const Expr& ast, const Env& env) {
+    C.push_back(EvInstr{ast, env, Address{}});
+}
+
+void Machine::send(const Value& val) {
+    V.push_back(val);
+}
+
+void Machine::add_log_weight(double weight) {
+    log_w += weight;
+}
+
+double Machine::get_log_weight() const {
+    return log_w;
 }
 
 // STEP METHODS
@@ -95,7 +111,7 @@ std::optional<Message> Machine::stepSampleContinuation(SamplekInstr& instr) {
     Value dist_val = popValue();
     auto dist = std::get<std::shared_ptr<Distribution>>(dist_val);
     
-    return SampleMsg{instr.addr, dist, this};
+    return SampleMsg{instr.addr, dist};
 }
 
 std::optional<Message> Machine::stepObserveContinuation(ObservekInstr& instr) {
@@ -105,7 +121,7 @@ std::optional<Message> Machine::stepObserveContinuation(ObservekInstr& instr) {
     double y = std::get<double>(y_val);
     auto dist = std::get<std::shared_ptr<Distribution>>(dist_val);
     
-    return ObserveMsg{instr.addr, dist, y, this};
+    return ObserveMsg{instr.addr, dist, y};
 }
 
 // EVAL METHODS
@@ -242,3 +258,4 @@ void Machine::applyClosure(const Value& func, const std::vector<Value>& args, co
 
     pushBody(closure->body, execution_env, extendAddress(addr, "apply"));
 }
+

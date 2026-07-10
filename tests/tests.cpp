@@ -168,7 +168,7 @@ void test_distributions_2_bernoulli() {
 
 void test_machine_1_literal_evaluation() {
     Machine m;
-    m.C.push_back(EvInstr{Expr(42.0), Env{}, Address{}});
+    m.load_ast(Expr(42.0)); // Encapsulated initialization
     
     Message msg = m.resume();
 
@@ -177,9 +177,6 @@ void test_machine_1_literal_evaluation() {
     
     assert(std::holds_alternative<double>(done_msg.value));
     assert(std::get<double>(done_msg.value) == 42.0);
-    
-    assert(m.V.size() == 1);
-    assert(std::get<double>(m.V.back()) == 42.0);
 }
 
 void test_machine_2_symbol_evaluation() {
@@ -188,7 +185,7 @@ void test_machine_2_symbol_evaluation() {
     Env env;
     env["mu"] = 3.14;
 
-    m.C.push_back(EvInstr{Expr("mu"), env, Address{}});
+    m.load_ast(Expr("mu"), env); // Encapsulated initialization with env
     
     Message msg = m.resume();
 
@@ -197,14 +194,12 @@ void test_machine_2_symbol_evaluation() {
     
     assert(std::holds_alternative<double>(done_msg.value));
     assert(std::get<double>(done_msg.value) == 3.14);
-    assert(m.V.size() == 1);
-    assert(std::get<double>(m.V.back()) == 3.14);
 }
 
 void test_machine_3_symbol_not_found() {
     Machine m;
     
-    m.C.push_back(EvInstr{Expr("x"), Env{}, Address{}});
+    m.load_ast(Expr("x")); // Encapsulated initialization
     
     bool threw_exception = false;
     try {
@@ -224,7 +219,7 @@ Value run_file_through_machine(const std::string& filepath, Env env = Env{}) {
     Expr ast = HOPPLParser::parse_file(filepath);
 
     Machine m;
-    m.C.push_back(EvInstr{ast, env, Address{}});
+    m.load_ast(ast, env); // Encapsulated initialization
     Message msg = m.resume();
 
     assert(std::holds_alternative<DoneMsg>(msg));
