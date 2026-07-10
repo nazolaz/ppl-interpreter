@@ -294,6 +294,23 @@ void test_machine_fn_3_higher_order() {
     assert(std::get<double>(res) == 20.0);
 }
 
+// IF IMPLEMENTATION TESTS
+
+void test_machine_if_1_true() {
+    Value res = run_file_through_machine("ppl_programs/test_machine_if_1.txt");
+    assert(std::get<double>(res) == 42.0);
+}
+
+void test_machine_if_2_false() {
+    Value res = run_file_through_machine("ppl_programs/test_machine_if_2.txt");
+    assert(std::get<double>(res) == 99.0);
+}
+
+void test_machine_if_3_nested() {
+    Value res = run_file_through_machine("ppl_programs/test_machine_if_3.txt");
+    assert(std::get<double>(res) == 10.0);
+}
+
 
 // TEST RUNNERS
 
@@ -342,6 +359,12 @@ void run_machine_fn_tests() {
     test_machine_fn_3_higher_order();
 }
 
+void run_machine_if_tests() {
+    test_machine_if_1_true();
+    test_machine_if_2_false();
+    test_machine_if_3_nested();
+}
+
 int main() {
     run_parser_tests();
     run_printVisitor_tests();
@@ -351,6 +374,7 @@ int main() {
     run_machine_function_eval_tests();
     run_machine_let_tests();
     run_machine_fn_tests();
+    run_machine_if_tests();
     std::cout << "All tests passed successfully.\n";
     return 0;
 }

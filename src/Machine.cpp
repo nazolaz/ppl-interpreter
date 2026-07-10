@@ -15,6 +15,7 @@ Message Machine::resume() {
             [this](EvInstr& i) { return stepEvaluate(i); },
             [this](CallkInstr& i) { return stepCallContinuation(i); },
             [this](LetkInstr& i) { return stepLetContinuation(i); }, 
+            [this](IfkInstr& i) { return stepIfContinuation(i); },
             [this](DiscardInstr& i) -> std::optional<Message> { popValue(); return std::nullopt; },
             [](auto& i) -> std::optional<Message> { 
                 throw std::runtime_error("Instruction handler not implemented."); 
@@ -39,6 +40,7 @@ std::optional<Message> Machine::stepEvaluate(EvInstr& instr) {
         [this, &instr](std::vector<Expr>& list) { evalList(list, instr.env, instr.addr); },
         [this, &instr](std::shared_ptr<LetNode>& let_node) { evalLetNode(let_node, instr.env, instr.addr); },
         [this, &instr](std::shared_ptr<FnNode>& fn_node) { evalFnNode(fn_node, instr.env); },
+        [this, &instr](std::shared_ptr<IfNode>& if_node) { evalIfNode(if_node, instr.env, instr.addr); },
         [&instr](auto& other) {
             throw std::runtime_error("Expression type not implemented. Variant index: " + std::to_string(instr.e.value.index()));
         }
@@ -53,6 +55,18 @@ std::optional<Message> Machine::stepCallContinuation(CallkInstr& instr) {
 
     applyFunction(func, args, instr.addr);
 
+    return std::nullopt;
+}
+
+std::optional<Message> Machine::stepIfContinuation(IfkInstr& instr) {
+    Value test_result = popValue();
+    
+    if (isTruthy(test_result)) {
+        C.push_back(EvInstr{*instr.then_branch, instr.env, extendAddress(instr.addr, "if_then")});
+    } else {
+        C.push_back(EvInstr{*instr.else_branch, instr.env, extendAddress(instr.addr, "if_else")});
+    }
+    
     return std::nullopt;
 }
 
@@ -91,6 +105,11 @@ void Machine::evalSymbol(const SymbolNode& sym, const Env& current_env) {
     else {
         throw std::runtime_error("NameError: " + sym.name);
     }
+}
+
+void Machine::evalIfNode(const std::shared_ptr<IfNode>& if_node, const Env& env, const Address& addr) {
+    C.push_back(IfkInstr{if_node->then_branch, if_node->else_branch, env, addr});
+    C.push_back(EvInstr{*if_node->test, env, extendAddress(addr, "if_test")});
 }
 
 void Machine::evalList(const std::vector<Expr>& list, const Env& env, const Address& addr) {
@@ -157,7 +176,6 @@ void Machine::applyFunction(const Value& func, const std::vector<Value>& args, c
     }
 }
 
-
 void Machine::pushBody(const std::vector<Expr>& body, const Env& env, const Address& addr) {
     C.push_back(EvInstr{body.back(), env, extendAddress(addr, "body_" + std::to_string(body.size() - 1))});
     
@@ -166,7 +184,6 @@ void Machine::pushBody(const std::vector<Expr>& body, const Env& env, const Addr
         C.push_back(EvInstr{body[i], env, extendAddress(addr, "body_" + std::to_string(i))});
     }
 }
-
 
 void Machine::applyPrimitive(const Value& func, const std::vector<Value>& args) {
     std::string prim_name = getPrimitiveName(func);

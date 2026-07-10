@@ -45,3 +45,11 @@ inline bool isClosure(const Value& val) {
 inline std::shared_ptr<Closure> getClosure(const Value& val) {
     return std::get<std::shared_ptr<Closure>>(val);
 }
+
+inline bool isTruthy(const Value& val) {
+    if (std::holds_alternative<double>(val)) {
+        return std::get<double>(val) != 0.0; 
+    }
+
+    return true; 
+}

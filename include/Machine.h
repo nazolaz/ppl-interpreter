@@ -21,7 +21,9 @@ private:
     std::optional<Message> stepEvaluate(EvInstr& instr);
     std::optional<Message> stepCallContinuation(CallkInstr& instr);
     std::optional<Message> stepLetContinuation(LetkInstr& instr);
-
+    std::optional<Message> stepIfContinuation(IfkInstr& instr);
+    
+    void evalIfNode(const std::shared_ptr<IfNode>& if_node, const Env& env, const Address& addr);
     void evalLetNode(const std::shared_ptr<LetNode>& let_node, const Env& env, const Address& addr);
     void evalLiteral(double d);
     void evalSymbol(const SymbolNode& sym, const Env& current_env);
@@ -35,4 +37,5 @@ private:
     void pushBody(const std::vector<Expr>& body, const Env& env, const Address& addr);
     void applyPrimitive(const Value& func, const std::vector<Value>& args);
     void applyClosure(const Value& func, const std::vector<Value>& args, const Address& addr);
+
 };
