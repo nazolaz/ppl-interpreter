@@ -6,6 +6,9 @@
 #include <cstdlib>
 #include <fstream>
 #include <stdexcept>
+#include <filesystem>
+#include <vector>
+#include <string>
 
 PPLRunner::PPLRunner() : iterations(10000), algorithm("lw"), outfile("") {}
 
@@ -45,12 +48,7 @@ bool PPLRunner::parse_arguments(int argc, char* argv[]) {
     return true;
 }
 
-#include <fstream>
-#include <iostream>
-#include <filesystem>
-#include <vector>
-
-void PPLRunner::export_results(const std::vector<double>& results, const std::vector<double>& weights) const {
+void PPLRunner::export_results(double mean, const std::vector<double>& results, const std::vector<double>& weights) const {
     if (outfile.empty()) return;
 
     std::filesystem::path out_path(outfile);
@@ -64,14 +62,18 @@ void PPLRunner::export_results(const std::vector<double>& results, const std::ve
 
     std::ofstream f(out_path);
     
-    f << "value";
+    f << "# Mean: " << mean << "\n";
+    
+    f << "step,algorithm,seed,value";
     if (!weights.empty()) {
         f << ",weight";
     }
     f << "\n";
 
+    std::string seed_str = seed.has_value() ? std::to_string(seed.value()) : "random";
+
     for (size_t i = 0; i < results.size(); ++i) {
-        f << results[i];
+        f << i << "," << algorithm << "," << seed_str << "," << results[i];
         if (!weights.empty()) {
             f << "," << weights[i];
         }
@@ -89,7 +91,7 @@ void PPLRunner::run_lw() {
         expected_value += results[i] * weights[i];
     }
     std::cout << "Expected Value (Mean): " << expected_value << "\n";
-    export_results(results, weights);
+    export_results(expected_value, results, weights);
 }
 
 void PPLRunner::run_smc() {
@@ -103,7 +105,7 @@ void PPLRunner::run_smc() {
     }
     expected_value /= iterations;
     std::cout << "Expected Value (Mean): " << expected_value << "\n";
-    export_results(results);
+    export_results(expected_value, results);
 }
 
 void PPLRunner::run_mh() {
@@ -118,7 +120,7 @@ void PPLRunner::run_mh() {
     }
     expected_value /= results.size();
     std::cout << "Expected Value (Mean post burn-in): " << expected_value << "\n";
-    export_results(results);
+    export_results(expected_value, results);
 }
 
 int PPLRunner::execute(int argc, char* argv[]) {

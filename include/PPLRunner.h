@@ -15,8 +15,8 @@ private:
 
     void print_usage(const std::string& program_name) const;
     bool parse_arguments(int argc, char* argv[]);
-    void export_results(const std::vector<double>& results, const std::vector<double>& weights = {}) const;
-    
+    void export_results(double mean, const std::vector<double>& results, const std::vector<double>& weights = {}) const;
+
     void run_lw();
     void run_smc();
     void run_mh();
