@@ -30,7 +30,7 @@ The algorithms act as "controllers" over the message stream emitted by the `Mach
 A straightforward controller. When it receives a `SampleMsg`, it draws a value from the distribution using the RNG and sends it back. When it receives an `ObserveMsg`, it calculates the log-probability of the observed value under the distribution and accumulates it into the particle's total weight.
 
 ### Sequential Monte Carlo (`SequentialMonteCarlo.h/cpp`)
-SMC maintains a population of multiple `Machine` instances (particles). It advances all machines to their next breakpoint (usually an `observe` message). Once all machines are paused at the same synchronization point, SMC scores their weights, resamples the population to prune low-weight executions, and uses the `fork()` mechanism to clone the surviving machines before resuming them.
+SMC maintains a population of multiple `Machine` instances (particles), which are evaluated in parallel using OpenMP to maximize performance. It advances all machines to their next breakpoint (usually an `observe` message). Once all machines are paused at the same synchronization point, SMC scores their weights, resamples the population to prune low-weight executions, and uses the `fork()` mechanism to clone the surviving machines before resuming them.
 
 ### Single-Site Metropolis-Hastings (`SSMetropolisHastings.h/cpp`)
 Instead of keeping many machines, SSMH keeps an address-keyed trace of a single machine's execution. 
@@ -43,7 +43,7 @@ Instead of keeping many machines, SSMH keeps an address-keyed trace of a single 
 
 To ensure statistical independence across particles and enable reproducible testing, random number generation is strictly controlled:
 
-* **Move-Only Semantics:** The `AnyRNG` class prevents copying, ensuring that multithreaded environments (like OpenMP loops) don't accidentally share RNG states, which would destroy the mathematical validity of the algorithms.
+* **Move-Only Semantics:** The `AnyRNG` class prevents copying. This guarantees that parallel OpenMP threads cannot accidentally share RNG states, preserving the mathematical validity of the independent samples.
 * **Deterministic vs. Stochastic:** Algorithms can be initialized with an `std::optional<uint32_t> seed`. If no seed is provided, `AnyRNG` uses `std::random_device` for OS-level entropy. If a seed is provided, it uses a template constructor to initialize deterministic chains (e.g., `seed + i` for particles), guaranteeing reproducible benchmarks.
 
 ## 5. The CLI Layer (`PPLRunner.h/cpp`)
