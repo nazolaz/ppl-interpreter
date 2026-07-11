@@ -34,13 +34,19 @@ TESTS = [
 ]
 
 ENGINE_PATH = "./build/ppl_engine"
-TEMP_CSV = "temp_results.csv"
+TEMP_CSV = "outputs/temp_results.csv"
 
 def calculate_mean_from_csv(csv_path, is_lw):
+    with open(csv_path, 'r') as f:
+        first_line = f.readline()
+        if first_line.startswith("# Mean:"):
+            return float(first_line.split(":")[1].strip())
+        
     mean = 0.0
     count = 0
     with open(csv_path, 'r') as f:
-        reader = csv.DictReader(f)
+        lines = [line for line in f if not line.startswith('#')]
+        reader = csv.DictReader(lines)
         for row in reader:
             val = float(row['value'])
             if is_lw:
