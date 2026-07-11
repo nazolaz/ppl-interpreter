@@ -1,0 +1,8 @@
+(let [
+  z1 (sample (normal 0 1))
+  o1 (observe (normal z1 0.5) 1.2)
+  z2 (sample (normal z1 1.0))
+  o2 (observe (normal z2 0.5) 1.5)
+  z3 (sample (normal z2 1.0))
+  o3 (observe (normal z3 0.5) 2.0)
+] z3)

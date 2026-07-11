@@ -1,0 +1,13 @@
+(let [
+  w (sample (normal 0 3))
+  b (sample (normal 0 3))
+  
+  mu1 (+ (* w -2.0) b)
+  o1 (observe (normal mu1 0.3) -1.0)
+  
+  mu2 (+ (* w 1.5) b)
+  o2 (observe (normal mu2 0.3) 2.0)
+  
+  mu3 (+ (* w 3.0) b)
+  o3 (observe (normal mu3 0.3) 1.8)
+] w)

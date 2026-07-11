@@ -1,0 +1,5 @@
+(let [z (sample (bernoulli 0.5)) 
+      a (if z (sample (normal 0 1)) 0) 
+      b (sample (normal 10 1))] 
+  (observe (normal (+ a b) 1) 10.0) 
+  z)
