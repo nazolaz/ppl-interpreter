@@ -1,4 +1,4 @@
-# Engine Architecture
+# CHOPPL Engine Architecture
 
 This document details the internal architecture of the C++ HOPPL inference engine. The design strictly separates the probabilistic model's evaluation from the mathematical inference algorithms, using an interruptible coroutine-like model.
 

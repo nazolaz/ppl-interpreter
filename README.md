@@ -1,4 +1,4 @@
-# HOPPL-based C++ Inference Engine
+# CHOPPL: A C++ HOPPL Inference Engine
 
 A Probabilistic Programming Language (PPL) inference engine written in C++17. 
 
