@@ -10,6 +10,8 @@ The core of the evaluator is a Stack Machine that does absolutely no probabilist
 * **Lexical Scoping & Closures:** To support first-class functions and recursion, the machine implements closures. A closure pairs a function's body with the environment (`env`) where it was defined. During the `callk` instruction, the machine extends the closure's captured environment with the new arguments, ensuring proper lexical scope over caller scope.
 * **Execution Flow:** The evaluator runs via `resume(m)` until it hits a probabilistic effect or finishes, at which point it yields control back to the inference controller.
 
+* **Deterministic Verification (`tests/tests.cpp`):** Because the machine performs no probabilistic inference, its behavior is strictly deterministic. A suite of C++ unit tests verifies the parser, the control stack, closures, and mathematical primitives. These tests also serve as living documentation demonstrating how the machine evaluates raw HOPPL instructions.
+
 ## 2. The Messaging Interface (`Message.h`)
 
 Because the evaluator does not calculate probabilities, it communicates with the inference controllers via message passing. 
