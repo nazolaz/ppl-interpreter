@@ -76,13 +76,13 @@ If you just want to run a file with the default settings, simply type the execut
 #### Customizing the Execution
 You can change how the engine processes your model by adding options (flags) after the filename.
 
-**--algo** $<name>$: Chooses the specific inference algorithm. You can pass lw (Likelihood Weighting), smc (Sequential Monte Carlo), or mh (Metropolis-Hastings). If you omit this, the engine defaults to lw.
+**--algo** ${name}$: Chooses the specific inference algorithm. You can pass lw (Likelihood Weighting), smc (Sequential Monte Carlo), or mh (Metropolis-Hastings). If you omit this, the engine defaults to lw.
 
-**--iter** $<number>$: Sets the number of simulations to run (particles for LW/SMC, or steps for MH). More iterations yield higher accuracy but take longer to compute.
+**--iter** ${number}$: Sets the number of simulations to run (particles for LW/SMC, or steps for MH). More iterations yield higher accuracy but take longer to compute.
 
-**--seed** $<number>$: Forces the engine to use a specific starting point for its random number generator. This guarantees you get the exact same results every time you run it, which is useful for debugging. If you omit this, the engine generates truly random results.
+**--seed** ${number}$: Forces the engine to use a specific starting point for its random number generator. This guarantees you get the exact same results every time you run it, which is useful for debugging. If you omit this, the engine generates truly random results.
 
-**--out** $<filename>$: Saves the mathematical results into a file (like data.csv) instead of just printing them to your terminal screen.
+**--out** ${filename}$: Saves the mathematical results into a file (like data.csv) instead of just printing them to your terminal screen.
 
 #### Examples
 
