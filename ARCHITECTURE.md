@@ -53,5 +53,6 @@ To ensure statistical independence across particles and enable reproducible test
 The `PPLRunner` class encapsulates all I/O and argument parsing, keeping the algorithms pure. 
 
 * **Routing:** It parses command-line flags (`--algo`, `--iter`, `--seed`, `--out`) and instantiates the correct inference controller.
+* **Validation:** It provides a `--dry-run` mode that strictly runs the `HOPPLParser` to validate abstract syntax trees (ASTs) without initializing heavy inference loops.
 * **Execution:** It invokes the `.run()` methods, passing along the iterations and the optional seed.
 * **Exporting:** It calculates the expected values (handling both weighted and unweighted outputs) and automatically routes raw trace data into an `/outputs/` directory structure via the `<filesystem>` library for downstream analysis.

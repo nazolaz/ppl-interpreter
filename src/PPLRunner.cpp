@@ -2,6 +2,7 @@
 #include "LikelihoodWeighting.h"
 #include "SequentialMonteCarlo.h"
 #include "SSMetropolisHastings.h"
+#include "HOPPLParser.h"
 #include <iostream>
 #include <cstdlib>
 #include <fstream>
@@ -10,7 +11,7 @@
 #include <vector>
 #include <string>
 
-PPLRunner::PPLRunner() : iterations(10000), algorithm("lw"), outfile("") {}
+PPLRunner::PPLRunner() : iterations(10000), algorithm("lw"), outfile(""), dry_run(false) {}
 
 void PPLRunner::print_usage(const std::string& program_name) const {
     std::cout << "Usage: " << program_name << " <filename.txt> [options]\n"
@@ -18,7 +19,8 @@ void PPLRunner::print_usage(const std::string& program_name) const {
               << "  --algo <lw|smc|mh>   Inference algorithm (default: lw)\n"
               << "  --iter <number>      Number of particles/steps (default: 10000)\n"
               << "  --seed <number>      Deterministic seed (optional)\n"
-              << "  --out <file.csv>     Export raw results to CSV (optional)\n";
+              << "  --out <file.csv>     Export raw results to CSV (optional)\n"
+              << "  --dry-run            Parse and validate syntax without running inference\n";
 }
 
 bool PPLRunner::parse_arguments(int argc, char* argv[]) {
@@ -39,6 +41,8 @@ bool PPLRunner::parse_arguments(int argc, char* argv[]) {
             seed = static_cast<uint32_t>(std::stoul(argv[++i]));
         } else if (arg == "--out" && i + 1 < argc) {
             outfile = argv[++i];
+        } else if (arg == "--dry-run") {
+            dry_run = true;
         } else {
             std::cerr << "Unknown or incomplete argument: " << arg << "\n";
             print_usage(argv[0]);
@@ -126,6 +130,12 @@ void PPLRunner::run_mh() {
 int PPLRunner::execute(int argc, char* argv[]) {
     if (!parse_arguments(argc, argv)) return 1;
     try {
+        if (dry_run) {
+            std::cout << "=> Performing dry run for syntax validation...\n";
+            HOPPLParser::parse_file(filename);
+            std::cout << "=> Dry run successful. Syntax is valid.\n";
+            return 0;
+        }
         if (algorithm == "lw") run_lw();
         else if (algorithm == "smc") run_smc();
         else if (algorithm == "mh") run_mh();

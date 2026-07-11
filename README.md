@@ -84,6 +84,8 @@ You can change how the engine processes your model by adding options (flags) aft
 
 **--out** ${filename}$: Saves the mathematical results into a file (like data.csv) instead of just printing them to your terminal screen.
 
+**--dry-run** : Parse and validate the HOPPL syntax without executing inference
+
 #### Examples
 
 Run a model using Sequential Monte Carlo with 20,000 particles:
