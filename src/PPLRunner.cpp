@@ -45,26 +45,38 @@ bool PPLRunner::parse_arguments(int argc, char* argv[]) {
     return true;
 }
 
+#include <fstream>
+#include <iostream>
+#include <filesystem>
+#include <vector>
+
 void PPLRunner::export_results(const std::vector<double>& results, const std::vector<double>& weights) const {
     if (outfile.empty()) return;
 
-    std::ofstream file(outfile);
-    if (!file.is_open()) {
-        std::cerr << "Warning: Could not open file " << outfile << " for writing.\n";
-        return;
+    std::filesystem::path out_path(outfile);
+    
+    if (!out_path.has_parent_path()) {
+        std::filesystem::create_directory("outputs");
+        out_path = std::filesystem::path("outputs") / out_path;
+    } else {
+        std::filesystem::create_directories(out_path.parent_path());
     }
 
-    bool has_weights = !weights.empty() && weights.size() == results.size();
-    file << "value" << (has_weights ? ",weight\n" : "\n");
+    std::ofstream f(out_path);
+    
+    f << "value";
+    if (!weights.empty()) {
+        f << ",weight";
+    }
+    f << "\n";
 
     for (size_t i = 0; i < results.size(); ++i) {
-        file << results[i];
-        if (has_weights) file << "," << weights[i];
-        file << "\n";
+        f << results[i];
+        if (!weights.empty()) {
+            f << "," << weights[i];
+        }
+        f << "\n";
     }
-    
-    file.close();
-    std::cout << "Results exported to " << outfile << "\n";
 }
 
 void PPLRunner::run_lw() {
