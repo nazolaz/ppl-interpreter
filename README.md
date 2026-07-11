@@ -1,7 +1,5 @@
 # CHOPPL: A C++ HOPPL Inference Engine
 
-A Probabilistic Programming Language (PPL) inference engine written in C++17. 
-
 This engine was developed following the concepts from the **"Introduction to Probabilistic Programming Languages"** course, taught by Javier Burroni during the second semester of 2026 at the **Universidad de Buenos Aires (UBA)**. The language syntax, structural semantics, and evaluation models are heavily inspired by the Higher-Order Probabilistic Programming Language (HOPPL) as detailed in the textbook *An Introduction to Probabilistic Programming* by Jan-Willem van de Meent, Brooks Paige, David Tolpin, and Frank Wood.
 
 The engine evaluates a Lisp-like syntax based on Clojure. It strictly adheres to the formal grammar of the Higher-Order Probabilistic Programming Language, supporting standard deterministic operations alongside stochastic side-effects.
