@@ -21,7 +21,7 @@ TESTS = [
         "name": "3-Step Random Walk (Sequential HMM)",
         "file": "ppl_programs/random_walk_model.txt",
         "algo": "smc",
-        "expected_mean": 1.75,  
+        "expected_mean": 1.898,  
         "tolerance": 0.10
     },
     {

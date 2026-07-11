@@ -63,6 +63,8 @@ std::optional<Message> Machine::stepEvaluate(EvInstr& instr) {
         [this, &instr](std::shared_ptr<LetNode>& let_node) { evalLetNode(let_node, instr.env, instr.addr); },
         [this, &instr](std::shared_ptr<FnNode>& fn_node) { evalFnNode(fn_node, instr.env); },
         [this, &instr](std::shared_ptr<IfNode>& if_node) { evalIfNode(if_node, instr.env, instr.addr); },
+        [this, &instr](std::shared_ptr<SampleNode>& sample_node) { evalSampleNode(sample_node, instr.env, instr.addr); },
+        [this, &instr](std::shared_ptr<ObserveNode>& obs_node) { evalObserveNode(obs_node, instr.env, instr.addr); },
         [&instr](auto& other) {
             throw std::runtime_error("Expression type not implemented. Variant index: " + std::to_string(instr.e.value.index()));
         }
@@ -163,7 +165,6 @@ void Machine::evalList(const std::vector<Expr>& list, const Env& env, const Addr
     C.push_back(EvInstr{list[0], env, extendAddress(addr, "fn")});
 }
 
-
 void Machine::evalLetNode(const std::shared_ptr<LetNode>& let_node, const Env& env, const Address& addr) {
     if (let_node->hasBinding(0)) {
         C.push_back(LetkInstr{let_node->binds, 0, let_node->body, env, addr});
@@ -182,6 +183,17 @@ void Machine::evalFnNode(const std::shared_ptr<FnNode>& fn_node, const Env& env)
     closure->env = env;
     
     V.push_back(closure);
+}
+
+void Machine::evalSampleNode(const std::shared_ptr<SampleNode>& sample_node, const Env& env, const Address& addr) {
+    C.push_back(SamplekInstr{addr});
+    C.push_back(EvInstr{*sample_node->dist, env, extendAddress(addr, "sample_dist")});
+}
+
+void Machine::evalObserveNode(const std::shared_ptr<ObserveNode>& obs_node, const Env& env, const Address& addr) {
+    C.push_back(ObservekInstr{addr});
+    C.push_back(EvInstr{*obs_node->value, env, extendAddress(addr, "obs_val")});
+    C.push_back(EvInstr{*obs_node->dist, env, extendAddress(addr, "obs_dist")});
 }
 
 // AUX - DECLARATIVE METHODS

@@ -35,6 +35,8 @@ private:
     void evalSymbol(const SymbolNode& sym, const Env& current_env);
     void evalFnNode(const std::shared_ptr<FnNode>& fn_node, const Env& env);
     void evalList(const std::vector<Expr>& list, const Env& env, const Address& addr);
+    void evalSampleNode(const std::shared_ptr<SampleNode>& sample_node, const Env& env, const Address& addr);
+    void evalObserveNode(const std::shared_ptr<ObserveNode>& obs_node, const Env& env, const Address& addr);
 
     std::vector<Value> popArguments(int n);
     Value popValue();
